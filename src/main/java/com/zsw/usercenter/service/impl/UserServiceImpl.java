@@ -7,6 +7,7 @@ import com.zsw.usercenter.service.UserService;
 import com.zsw.usercenter.mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.DigestUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,6 +19,8 @@ import java.util.regex.Pattern;
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService{
+
+    private static final String REIN = "zsw";
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -52,8 +55,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return -1;
         }
 
+        // 2.加密
+        String encryptPassword = DigestUtils.md5DigestAsHex((REIN + userPassword).getBytes());
 
-        return 0;
+        // 3.插入数据
+        User user = new User();
+        user.setUserAccount(userAccount);
+        user.setUserPassword(userPassword);
+
+        boolean saveResult = this.save(user);
+        if(!saveResult){
+            return -1;
+        }
+
+        return user.getId();
     }
 }
 
