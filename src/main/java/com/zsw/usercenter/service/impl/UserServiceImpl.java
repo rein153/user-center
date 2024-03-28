@@ -1,7 +1,5 @@
 package com.zsw.usercenter.service.impl;
-import java.util.Date;
 
-import com.baomidou.mybatisplus.core.assist.ISqlRunner;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zsw.usercenter.model.domain.User;
@@ -17,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.zsw.usercenter.constant.UserConstant.USER_LOGIN_STATE;
+
 /**
 * @author zsw
 * 用户服务实现类
@@ -28,12 +28,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Resource
     private UserMapper userMapper;
-    private static final String REIN = "zsw";
 
     /**
-     * 用户登录态键
+     * 加密
      */
-    private static final String USER_LOGIN_STATE = "userLoginState";
+    private static final String REIN = "zsw";
+
+
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -74,7 +75,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 3.插入数据
         User user = new User();
         user.setUserAccount(userAccount);
-        user.setUserPassword(userPassword);
+        user.setUserPassword(encryptPassword);
 
         boolean saveResult = this.save(user);
         if(!saveResult){
@@ -123,9 +124,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 4.记录用户的登录态
         request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
 
+
         return null;
     }
 
+
+    /**
+     * 用户脱敏
+     * @param originUser
+     * @return
+     */
+    @Override
     public User getSafetyUser(User originUser) {
         if(originUser == null){
             return null;
@@ -138,12 +147,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setGender(originUser.getGender());
         safetyUser.setEmail(originUser.getEmail());
         safetyUser.setPhone(originUser.getPhone());
+        safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setUserStatus(originUser.getUserStatus());
         safetyUser.setCreateTime(originUser.getCreateTime());
 
         return safetyUser;
     }
-
 
 }
 
