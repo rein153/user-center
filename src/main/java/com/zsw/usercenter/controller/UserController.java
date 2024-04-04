@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 import static com.zsw.usercenter.constant.UserConstant.ADMIN_ROLE;
 
-//import static com.zsw.usercenter.constant.UserConstant.ADMIN_ROLE;
 
 /**
  * 用户接口
@@ -85,6 +84,7 @@ public class UserController {
 //        return userService.list(queryWrapper);
 
         List<User> userList = userService.list(queryWrapper);
+        // java8 数据流 遍历每个元素 密码都设置为空 最后还原成list
         return userList.stream().map(user -> {
             user.setUserPassword(null);
             return userService.getSafetyUser(user);
