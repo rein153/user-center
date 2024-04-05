@@ -2,6 +2,8 @@ package com.zsw.usercenter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zsw.usercenter.common.ErrorCode;
+import com.zsw.usercenter.exception.BusinessException;
 import com.zsw.usercenter.model.domain.User;
 import com.zsw.usercenter.service.UserService;
 import com.zsw.usercenter.mapper.UserMapper;
@@ -37,16 +39,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
 
     @Override
-    public long userRegister(String userAccount, String userPassword, String checkPassword) {
+    public long userRegister(String userAccount, String userPassword, String checkPassword, String plantCode) {
         // 1.校验
-        if(StringUtils.isAllBlank(userAccount,userPassword,checkPassword)){
-            return -1;
+        if(StringUtils.isAllBlank(userAccount,userPassword,checkPassword, plantCode)){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
         }
         if(userAccount.length() < 4){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
         }
         if(userPassword.length() < 8 || checkPassword.length() < 8){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+        }
+        if(plantCode.length() > 5){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "编号过长");
         }
 
         // 账户不能包含特殊字符
@@ -64,7 +69,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 账户不能重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount",userAccount);
-        long count = this.count(queryWrapper);
+        long count = userMapper.selectCount(queryWrapper);
+//        long count = this.count(queryWrapper);
+        if(count > 0){
+            return -1;
+        }
+        // 编号不能重复
+        queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("plantCode",plantCode);
+        count = userMapper.selectCount(queryWrapper);
+//        count = this.count(queryWrapper);
         if(count > 0){
             return -1;
         }
@@ -147,11 +161,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setGender(originUser.getGender());
         safetyUser.setEmail(originUser.getEmail());
         safetyUser.setPhone(originUser.getPhone());
+        safetyUser.setPlanetCode(originUser.getPlanetCode());
         safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setUserStatus(originUser.getUserStatus());
         safetyUser.setCreateTime(originUser.getCreateTime());
 
         return safetyUser;
+    }
+
+    @Override
+    public int userLogout(HttpServletRequest request) {
+        // 移除登录态
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        return 1;
     }
 
 }
